@@ -8,4 +8,4 @@ A place for you to 'zoom back' from day-to-day weight, and take your time to sme
 
 Here the theme is *culture appreciation*. 
 
-If you wish to contact me: 
+If you wish to contact me: https://dmf-1.github.io/MiracleWork/contact.html

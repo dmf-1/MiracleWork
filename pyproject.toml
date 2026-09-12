@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bs4>=0.0.2",
     "linkify-it-py>=2.2.0",
     "markdown-it-py>=4.2.0",
     "pillow>=12.3.0",

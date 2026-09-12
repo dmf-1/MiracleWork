@@ -8,7 +8,31 @@ from datetime import datetime
 SAVE_DIRECTORY = "Images"
 BANNER_DIRECTORY = "img"
 
-st.title("Silver-Potato Post editor")
+st.title("Mister Miracle Works")
+
+
+st.title("Miracles post creator")
+sample = '''
+# This is how you create a header
+## This creates a subheader
+Bullet points: 
+    * Are created like this
+And checklists:
+    [] Like this
+If you want something in *bold* or _italic_ ...
+Or even ~striken~
+When you are quoting someone: 
+> Put their quote like this...
+
+This is the general gist!
+'''
+
+
+with st.sidebar:
+    st.info("Here's a simple markdown cheat sheet:")
+    st.text(sample)
+    st.divider()
+
 
 with st.form("page_form"):
 
@@ -25,15 +49,6 @@ with st.form("page_form"):
 
     # Define paragraph inputs
     post_content = st.text_area("Your next story here....")
-
-    # Define image inputs
-    images = []
-
-    uploaded_files = st.file_uploader(
-        "Upload images", accept_multiple_files="directory", type=["jpg", "png"]
-    )
-    for uploaded_file in uploaded_files:
-        images.append(uploaded_file)
 
     # Every form must have a submit button.
     submitted = st.form_submit_button("Submit")

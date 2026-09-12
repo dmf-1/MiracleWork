@@ -8,9 +8,6 @@ from datetime import datetime
 SAVE_DIRECTORY = "Images"
 BANNER_DIRECTORY = "img"
 
-st.title("Mister Miracle Works")
-
-
 st.title("Miracles post creator")
 sample = '''
 # This is how you create a header

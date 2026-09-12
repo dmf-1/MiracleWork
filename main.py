@@ -119,7 +119,7 @@ with st.form("page_form"):
         new_post_link.append(h3)
         # P (small)
         p = new_post_link.new_tag('small',  class_='post-meta')
-        p.insert(0, NavigableString(f'Publicado por Joana Araújo Cardoso {datetime.today()}'))
+        p.insert(0, NavigableString(f'Publicado por Diogo Faria {datetime.today()}'))
         new_post_link.append(p)
         
         index.make_new_soup(index.soup.prettify())

@@ -2,6 +2,10 @@ import pathlib
 import re
 from bs4 import BeautifulSoup as bs
 from markdown_it import MarkdownIt
+import os
+
+def commit():
+    os.system('~/update_git.sh')
 
 PATH = pathlib.Path(__file__).parent.resolve()
 class Parser:
@@ -100,4 +104,5 @@ class Parser:
 
         # Persist updated soup to HTML file
         self.overwrite_html_file(new_file=new_file)
+        commit()
         return "Object overwritten successfully"

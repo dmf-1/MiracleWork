@@ -126,7 +126,4 @@ with st.form("page_form"):
                
 
         # Replace index
-        st.info(f"✅ Story submitted successully") 
-
-
-
+        st.info(f"✅ Story submitted successully")

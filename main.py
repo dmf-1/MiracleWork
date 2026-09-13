@@ -7,6 +7,8 @@ from datetime import datetime
                                                                                                                                                                     
 SAVE_DIRECTORY = "Images"
 BANNER_DIRECTORY = "img"
+now = datetime.now()
+f = now.strftime("%Y-%m-%d")
 
 st.title("Miracles post creator")
 sample = '''
@@ -84,7 +86,7 @@ with st.form("page_form"):
         post_heading = new_post_soup.find('h2', class_='subheading')
         post_heading.string = sub_title
         post_heading = new_post_soup.find('span', class_='meta')
-        post_heading.string = str(datetime.today())
+        post_heading.string = f
         print('Updated banner and title')
         st.info('Updated banner and title...')
         new_post_update_title.make_new_soup(new_post_soup.prettify())
@@ -116,8 +118,6 @@ with st.form("page_form"):
         new_post_link.append(h3)
         # P (small)
         p = new_post_link.new_tag('small',  class_='post-meta')
-        now = datetime.now()
-        f = now.strftime("%Y-%m-%d")
         p.insert(0, NavigableString(f'Publicado por Diogo Faria {f}'))
         new_post_link.append(p)
         

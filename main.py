@@ -7,8 +7,10 @@ from datetime import datetime
                                                                                                                                                                     
 SAVE_DIRECTORY = "Images"
 BANNER_DIRECTORY = "img"
+now = datetime.now()
+f = now.strftime("%Y-%m-%d")
 
-st.title("Silver-Potato Post editor")
+st.title("Miracles post creator")
 sample = '''
 # This is how you create a header
 ## This creates a subheader
@@ -26,11 +28,10 @@ This is the general gist!
 
 
 with st.sidebar:
-    st.text('The post content section uses markdown')
-    st.divider()
-    st.info("Here's a simple cheat sheet:")
+    st.info("Here's a simple markdown cheat sheet:")
     st.text(sample)
     st.divider()
+
 
 with st.form("page_form"):
 
@@ -48,15 +49,6 @@ with st.form("page_form"):
     # Define paragraph inputs
     post_content = st.text_area("Your next story here....")
 
-    # Define image inputs
-    images = []
-
-    uploaded_files = st.file_uploader(
-        "Upload images", accept_multiple_files="directory", type=["jpg", "png"]
-    )
-    for uploaded_file in uploaded_files:
-        images.append(uploaded_file)
-
     # Every form must have a submit button.
     submitted = st.form_submit_button("Submit")
     
@@ -73,34 +65,13 @@ with st.form("page_form"):
                     f.write(file_bytes) 
             except Exception as e:                                                                                                                                                                                                       
                 st.error(f"An error occurred while saving the file: {e}")  
-                
-        if images:
-            for img in images:                                                                                                                                                                                                       
-                try:   
-                    print("Copying images to publication directory")                                                                                                                                                                                                                     
-                    # Get the file extension (e.g., 'png' from 'image.png')                                                                                                                                                                  
-                    file_extension = os.path.splitext(img.name)[1]
-                    file_name      = Path(os.path.splitext(img.name)[0]).name
-                                                                                                                                                                                                        
-                    # Create a unique filename based on the original name                                                                                                                                                                    
-                    save_path = os.path.join(SAVE_DIRECTORY, f"{file_name}{file_extension}")                                                                                                                                                                                                                                                                                                                                                                       
-                    # Read the file contents into bytes                                                                                                                                                                                      
-                    file_bytes = img.read()                                                                                                                                                                                    
-                                                                                                                                                                                                                                            
-                    # Write the bytes to the specified local path                                                                                                                                                                            
-                    with open(save_path, "wb") as f:                                                                                                                                                                                         
-                        f.write(file_bytes)                                                                                                                                                               
-                                                                                                                                                                                                                                            
-                except Exception as e:                                                                                                                                                                                                       
-                    st.error(f"An error occurred while saving the file: {e}")  
 
         print('Received post')
         # Replace publication information  
         new_post = Parser('post.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
         new_post.load_original()
         new_post_path = new_post.path # Store it to pass it href
-        content = new_post.convert_images(post_content)
-        new_post.make_new_soup(content, True)# True -> we want to parse from MD to HTML 
+        new_post.make_new_soup(post_content, True)# True -> we want to parse from MD to HTML 
         new_post.make_family(True) # True -> we want to create a new file 
         print('Created new post')
         st.info('Created new post ...')
@@ -115,7 +86,7 @@ with st.form("page_form"):
         post_heading = new_post_soup.find('h2', class_='subheading')
         post_heading.string = sub_title
         post_heading = new_post_soup.find('span', class_='meta')
-        post_heading.string = str(datetime.today())
+        post_heading.string = f
         print('Updated banner and title')
         st.info('Updated banner and title...')
         new_post_update_title.make_new_soup(new_post_soup.prettify())
@@ -131,7 +102,7 @@ with st.form("page_form"):
         new_post_preview = index.soup.new_tag('div', id='post-preview')
         post_preview.append(new_post_preview)
         post_preivew_div = post_preview.find('div', id='post-preview')
-        new_post_link = post_preview.new_tag('a', href=new_post_path)
+        new_post_link = post_preview.new_tag('a', href=str(new_post_path).split("/")[-1])
         post_preivew_div.append(new_post_link)
         # Here we are creating a new div
         # HR - separator
@@ -147,7 +118,7 @@ with st.form("page_form"):
         new_post_link.append(h3)
         # P (small)
         p = new_post_link.new_tag('small',  class_='post-meta')
-        p.insert(0, NavigableString(f'Publicado por Joana Araújo Cardoso {datetime.today()}'))
+        p.insert(0, NavigableString(f'Publicado por Diogo Faria {f}'))
         new_post_link.append(p)
         
         index.make_new_soup(index.soup.prettify())
@@ -157,7 +128,4 @@ with st.form("page_form"):
                
 
         # Replace index
-        st.info(f"✅ Story submitted successully") 
-
-
-
+        st.info(f"✅ Story submitted successully")

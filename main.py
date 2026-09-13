@@ -100,7 +100,7 @@ with st.form("page_form"):
         new_post_preview = index.soup.new_tag('div', id='post-preview')
         post_preview.append(new_post_preview)
         post_preivew_div = post_preview.find('div', id='post-preview')
-        new_post_link = post_preview.new_tag('a', href=new_post_path)
+        new_post_link = post_preview.new_tag('a', href=str(new_post_path).split("/")[-1])
         post_preivew_div.append(new_post_link)
         # Here we are creating a new div
         # HR - separator
@@ -116,7 +116,9 @@ with st.form("page_form"):
         new_post_link.append(h3)
         # P (small)
         p = new_post_link.new_tag('small',  class_='post-meta')
-        p.insert(0, NavigableString(f'Publicado por Diogo Faria {datetime.today()}'))
+        now = datetime.now()
+        f = now.strftime("%Y-%m-%d")
+        p.insert(0, NavigableString(f'Publicado por Diogo Faria {f}'))
         new_post_link.append(p)
         
         index.make_new_soup(index.soup.prettify())

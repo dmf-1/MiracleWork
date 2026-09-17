@@ -101,3 +101,47 @@ class Parser:
         # Persist updated soup to HTML file
         self.overwrite_html_file(new_file=new_file)
         return "Object overwritten successfully"
+    
+    def create_new_post(self, post_content):
+        """
+        Encapsulates post creation to simplify code
+            """
+        self.load_original()
+        self.make_new_soup(post_content, True)# True -> we want to parse from MD to HTML 
+        self.make_family(True) # True -> we want to create a new file
+        return self.path
+
+    def update_new_post_contents(self, banner_path, title, sub_title, date_):
+        # Fields that are updated with each new post
+        fields_to_change = {
+            'h1':['h1', title],
+            'h2':['subheading', sub_title],
+            'small':['meta', date_]
+        }
+        # Load new post reference html
+        self.load_original()
+
+        # Iteratively update fields
+        for k, v in fields_to_change.items():
+            post_heading = self.soup.find(k, class_=v[0])
+            print('V1: ', v[0], v[1])
+            post_heading.string = v[1]
+        
+        # Update background banner
+        background_image = self.soup.find('header', class_='intro-header')
+        background_image['style'] = f"background-image: url('{banner_path}')"
+        
+    def check_index (self, title, sub_title):
+        """
+        To avoid duplicating index entries new index updates need to pass this check
+        This is a preliminary measure - better implementation will come
+        """
+        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title")]
+        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle")]
+       
+        duplicated_title = len(titles) > 0
+        duplicated_sub_title = len(sub_titles) > 0
+        
+        return duplicated_title and duplicated_sub_title
+        
+        

@@ -145,6 +145,9 @@ class Parser:
        
         duplicated_title = len(titles) > 0
         duplicated_sub_title = len(sub_titles) > 0
+
+        print('Title ', duplicated_title)
+        print('Sub title ', duplicated_sub_title)
         
         return duplicated_title and duplicated_sub_title
         

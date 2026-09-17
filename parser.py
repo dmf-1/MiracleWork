@@ -140,8 +140,8 @@ class Parser:
         To avoid duplicating index entries new index updates need to pass this check
         This is a preliminary measure - better implementation will come
         """
-        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title")]
-        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle")]
+        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title") if i.text.strip == title]
+        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle") if i.text.strip == sub_title]
        
         duplicated_title = len(titles) > 0
         duplicated_sub_title = len(sub_titles) > 0

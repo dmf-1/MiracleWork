@@ -10,7 +10,7 @@ BANNER_DIRECTORY = "img"
 now = datetime.now()
 date_ = now.strftime("%Y-%m-%d")
 
-st.title("Miracles post creator")
+st.title("Silver-Postato")
 sample = [
     '# This is how you create a header',
     '## Here is a subheader',

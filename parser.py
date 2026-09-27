@@ -16,7 +16,10 @@ class Parser:
         fname = str(title).strip().replace(" ", "_")
         self.path = pathlib.Path(dst_dir / f"post_{fname}.html")
 
-    def load_original(self):
+    def load_html(self):
+        """
+        Loads an html file into object
+        """
         with open(self.template, "r", encoding="utf-8") as op:
             html = op.read()
         self.soup = bs(html, "html5lib")
@@ -32,7 +35,11 @@ class Parser:
                 img_n += 1
         return content
 
-    def make_new_soup(self, content, parse=False):
+    def parse_new_html(self, content, parse=False):
+        """
+        Receives new content (html / markdown) an parses into html 
+        """
+    
         if parse:
             md = MarkdownIt("gfm-like", {"maxNesting": 10})
             content = md.render(content)
@@ -43,8 +50,11 @@ class Parser:
         with open(path, "w", encoding="utf-8") as ov:
             ov.write(self.soup.prettify())
 
-    def create_new_child(self):
-        """Wraps parsed body nodes from self.n_soup into a new element defined by self.child."""
+    def append_post_content(self, content):
+        """
+        Uses newly parsed html from parse_new_html to convert it to post default structure
+        Identifies base tag in html and appends the content rendered in newly parsed html
+        """
         child_tag_name = self.child[0] if self.child else "div"
         child_id = (
             self.child[1]
@@ -60,7 +70,7 @@ class Parser:
         )
 
         # Extract parsed body contents from converted Markdown HTML
-        parsed_body = self.n_soup.find("body")
+        parsed_body = content.find("body")
         if parsed_body:
             # Transfer top-level elements into the new child tag
             for node in list(parsed_body.children):
@@ -68,13 +78,14 @@ class Parser:
 
         return new_child_tag
 
-    def make_family(self, new_file=False):
-        """Locates the parent tag in reference HTML (self.soup), replaces its content
 
+    def structure_post_tree(self, new_file=False):
+        """
+        Locates the parent tag in reference HTML (self.soup), replaces its content
         with the newly parsed child tag, and writes to disk.
         """
         if not hasattr(self, "soup"):
-            self.load_original()
+            self.load_html()
 
         # Locate target parent element using tag name and ID
         parent_tag_name = self.parent[0] if self.parent else None
@@ -91,7 +102,7 @@ class Parser:
             )
 
         # Generate new child element tree
-        new_child = self.create_new_child()
+        new_child = self.append_post_content(self.n_soup)
 
         # Replace existing content inside target parent
         parent_node.clear()
@@ -105,13 +116,15 @@ class Parser:
         """
         Encapsulates post creation to simplify code
         """
-        self.load_original()
-        self.make_new_soup(post_content, True)# True -> we want to parse from MD to HTML 
-        self.make_family(True) # True -> we want to create a new file
+        self.load_html()
+        self.parse_new_html(post_content, True)# True -> we want to parse from MD to HTML 
+        self.structure_post_tree(True) # True -> we want to create a new file
         return self.path
 
     def update_new_post_banner(self, banner_path):
-        # Update background banner
+        """
+            Updates banner on header in page
+        """
         background_image = self.soup.find('header', class_='intro-header')
         background_image['style'] = f"background-image: url('{banner_path}')"
         
@@ -120,8 +133,8 @@ class Parser:
         To avoid duplicating index entries new index updates need to pass this check
         This is a preliminary measure - better implementation will come
         """
-        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title")]
-        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle")]
+        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title") if i.text.strip() == title]
+        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle") if i.text.strip()  == sub_title]
        
         duplicated_title = len(titles) > 0
         duplicated_sub_title = len(sub_titles) > 0

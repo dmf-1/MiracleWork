@@ -15,7 +15,7 @@ tag_to_label = {
     'h1':'Header',
     'h2':'Sub-header',
     'span':'Sub-title',
-    'p':'Paragraph',
+    'p':'Content',
 }
 
 
@@ -60,11 +60,11 @@ def generic_form(page):
     st.subheader(f'Edit "{page}" content')
     with st.form(f'{page}_page_form'):
         parser = Parser(f'{page}.html', 'Title')
-        parser.load_original()
+        parser.load_html()
         editable_fields = parser.find_editable_fields(type='editable')
         if editable_fields:
             for i in editable_fields:
-                i.string = st.text_area(tag_to_label[i.name], placeholder=i.string, height='content')
+                i.string = st.text_area(tag_to_label[i.name], value = i.string, placeholder=i.string, height='content')
         save = st.form_submit_button('Save')
         if save: 
             parser.overwrite_html_file()
@@ -122,19 +122,19 @@ def post_page_form():
                 st.info('Created new post ...')
                 # Update banner, title, subtitle, and date on post
                 new_post_update_title = Parser(new_post.path, title, ['div', 'parent-post-preview'], ['div', 'child'])
-                new_post_update_title.load_original()
+                new_post_update_title.load_html()
                 new_post_update_title.edit_page_contents(title, 'h1', 'editable')
                 new_post_update_title.edit_page_contents(sub_title, 'h2', 'editable')
                 new_post_update_title.edit_page_contents(date_, 'small', 'editable')
                 new_post_update_title.update_new_post_banner(banner_path)
-                new_post_update_title.make_new_soup(new_post.soup.prettify()) # I think i can remove this line check later 
+                new_post_update_title.parse_new_html(new_post.soup.prettify()) # I think i can remove this line check later 
                 new_post_update_title.overwrite_html_file()
                 print('Updated banner and title')
                 st.info('Updated banner and title...')
                 
                 # Update index information 
                 index = Parser('index.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
-                index.load_original()
+                index.load_html()
                 reference_index = index.soup
                 
                 # Check if is duplicated or not
@@ -163,7 +163,7 @@ def post_page_form():
                     p.insert(0, NavigableString(f'Publicado por Diogo Faria {date_}'))
                     new_post_link.append(p)
                     
-                    index.make_new_soup(index.soup.prettify())
+                    index.parse_new_html(index.soup.prettify())
                     index.overwrite_html_file()
                     print('Updated index to contain new post')
                     st.info('Updated index to contain new post...')

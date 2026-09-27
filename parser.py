@@ -110,19 +110,7 @@ class Parser:
         self.make_family(True) # True -> we want to create a new file
         return self.path
 
-    def update_new_post_contents(self, banner_path, title, sub_title, date_):
-        # Fields that are updated with each new post
-        fields_to_change = {
-            'h1':['h1', title],
-            'h2':['subheading', sub_title],
-            'small':['meta', date_]
-        }
-
-        # Iteratively update fields
-        for k, v in fields_to_change.items():
-            post_heading = self.soup.find(k, class_=v[0])
-            post_heading.string = v[1]
-        
+    def update_new_post_banner(self, banner_path):
         # Update background banner
         background_image = self.soup.find('header', class_='intro-header')
         background_image['style'] = f"background-image: url('{banner_path}')"
@@ -140,11 +128,18 @@ class Parser:
         
         return duplicated_title and duplicated_sub_title
     
-    def edit_page_contents(self, content, tag, class_):
+    def find_editable_fields(self, type):
+        """
+        Identify editable fields in "editable" pages - include About me, Contact
+        """
+        post_heading = self.soup.find_all(type=type)
+        return post_heading
+        
+    def edit_page_contents(self, content, tag, type):
         """
         Encapsulates page editing code
         """
-        post_heading = self.soup.find(tag, class_=class_)
+        post_heading = self.soup.find(tag, type=type)
         print('Field changed', tag, content)
         post_heading.string = content
 

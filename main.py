@@ -11,7 +11,15 @@ BANNER_DIRECTORY = "img"
 now = datetime.now()
 date_ = now.strftime("%Y-%m-%d")
 
-st.title("Silver-Postato")
+tag_to_label = {
+    'h1':'Header',
+    'h2':'Sub-header',
+    'span':'Sub-title',
+    'p':'Paragraph',
+}
+
+
+st.title("Silver-potato")
 
 sample = [
     '# This is how you create a header',
@@ -47,60 +55,26 @@ if not is_pwd_set:
         helper.toggle_password_set()
         st.rerun()
 
-  
-def about_me_page_form():
-    with st.form('about_page_form'):
-        title = st.text_input("Header title for your introduction to the world")
-        sub_title = st.text_input("A subtitle, message (or blank)")
-        content = st.text_area("Tell us about yorself")
-        # Every form must have a submit button.
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            parser = Parser('about.html', title)
-            parser.load_original()
-            if title: 
-                parser.edit_page_contents(title, 'h1', 'h1') 
-            else: 
-                parser.edit_page_contents('', 'h1', 'h1')
-            if sub_title: 
-                parser.edit_page_contents(sub_title, 'span', 'subheading') 
-            else: 
-                parser.edit_page_contents('', 'span', 'subheading')
-            if content: 
-                parser.edit_page_contents(content, 'p', 'about_me_content') 
-            else: 
-                parser.edit_page_contents('', 'p', 'about_me_content')
+
+def generic_form(page):
+    st.subheader(f'Edit "{page}" content')
+    with st.form(f'{page}_page_form'):
+        parser = Parser(f'{page}.html', 'Title')
+        parser.load_original()
+        editable_fields = parser.find_editable_fields(type='editable')
+        if editable_fields:
+            for i in editable_fields:
+                i.string = st.text_area(tag_to_label[i.name], placeholder=i.string, height='content')
+        save = st.form_submit_button('Save')
+        if save: 
             parser.overwrite_html_file()
             st.rerun()
 
-def contact_page_form():
-    with st.form('contact_page_form'):
-        title = st.text_input("Header title for your introduction to the world")
-        sub_title = st.text_input("A subtitle, message (or blank)")
-        content = st.text_area("Tell us about yorself")
-        # Every form must have a submit button.
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            parser = Parser('about.html', title)
-            parser.load_original()
-            if title: 
-                parser.edit_page_contents(title, 'h1', 'h1') 
-            else: 
-                parser.edit_page_contents('', 'h1', 'h1')
-            if sub_title: 
-                parser.edit_page_contents(sub_title, 'span', 'subheading') 
-            else: 
-                parser.edit_page_contents('', 'span', 'subheading')
-            if content: 
-                parser.edit_page_contents(content, 'p', 'about_me_content') 
-            else: 
-                parser.edit_page_contents('', 'p', 'about_me_content')
-            parser.overwrite_html_file()
-            st.rerun()
 
 def post_page_form():
-    with st.form("post_page_form"):
+    st.subheader(f'Submit new post')
 
+    with st.form("post_page_form"):
         # Publication header
         banner = st.file_uploader(
             "Upload banner image", type=["jpg", "png"]
@@ -149,7 +123,10 @@ def post_page_form():
                 # Update banner, title, subtitle, and date on post
                 new_post_update_title = Parser(new_post.path, title, ['div', 'parent-post-preview'], ['div', 'child'])
                 new_post_update_title.load_original()
-                new_post_update_title.update_new_post_contents(banner_path, title, sub_title, date_)
+                new_post_update_title.edit_page_contents(title, 'h1', 'editable')
+                new_post_update_title.edit_page_contents(sub_title, 'h2', 'editable')
+                new_post_update_title.edit_page_contents(date_, 'small', 'editable')
+                new_post_update_title.update_new_post_banner(banner_path)
                 new_post_update_title.make_new_soup(new_post.soup.prettify()) # I think i can remove this line check later 
                 new_post_update_title.overwrite_html_file()
                 print('Updated banner and title')
@@ -195,7 +172,6 @@ def post_page_form():
 
                 # Replace index
                 st.info(f"✅ Story submitted successully")
-                st.rerun()
             else:
                 st.error('Please fill all fields to submit')
 
@@ -206,9 +182,9 @@ with tab1:
     post_page_form()
 
 with tab2:
-    about_me_page_form()
+    generic_form('about')
 
 with tab3:
-    contact_page_form()
+    generic_form('contact')
 
     

@@ -136,34 +136,11 @@ def post_page_form():
                 index = Parser('index.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
                 index.load_html()
                 reference_index = index.soup
+                index.duplicate_post(title, sub_title, helper.credentials['name'], date_)
+                
                 
                 # Check if is duplicated or not
                 if not index.check_index(title, sub_title):
-                    # Get first post-preview format 
-                    post_preview = reference_index.find('div', id='post-preview')
-                    new_post_preview = index.soup.new_tag('div', id='post-preview')
-                    post_preview.append(new_post_preview)
-                    post_preivew_div = post_preview.find('div', id='post-preview')
-                    new_post_link = post_preview.new_tag('a', href=str(new_post_path).split("/")[-1])
-                    post_preivew_div.append(new_post_link)
-                    # Here we are creating a new div
-                    # HR - separator
-                    p = new_post_link.new_tag('hr')
-                    new_post_link.append(p)
-                    # H2
-                    h2 = new_post_link.new_tag('h2', id='post-title')
-                    h2.insert(0, NavigableString(title))
-                    new_post_link.append(h2)
-                    # H3
-                    h3 = new_post_link.new_tag('h3', id='post-subtitle')
-                    h3.insert(0, NavigableString(sub_title))
-                    new_post_link.append(h3)
-                    # P (small)
-                    p = new_post_link.new_tag('small',  class_='post-meta')
-                    p.insert(0, NavigableString(f'Publicado por Diogo Faria {date_}'))
-                    new_post_link.append(p)
-                    
-                    index.parse_new_html(index.soup.prettify())
                     index.overwrite_html_file()
                     print('Updated index to contain new post')
                     st.info('Updated index to contain new post...')

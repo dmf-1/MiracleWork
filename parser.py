@@ -2,6 +2,7 @@ import pathlib
 import re
 from bs4 import BeautifulSoup as bs
 from markdown_it import MarkdownIt
+from copy import copy
 
 PATH = pathlib.Path(__file__).parent.resolve()
 class Parser:
@@ -156,5 +157,27 @@ class Parser:
         print('Field changed', tag, content)
         post_heading.string = content
 
+
+    def duplicate_post(self, title, sub_title, name, date_):
+        post_preview = self.soup.find('div', id='post-preview')
+
+        if post_preview is None:
+            raise ValueError("No div with id 'post-preview' found")
+
+        parent = post_preview.parent
+        index = parent.index(post_preview)
+        duplicate = copy(post_preview)
+
+        # avoid duplicate ids
+        for tag in duplicate.find_all(id=True):
+            del tag['id']
+
+        parent.insert(index + 1, duplicate)
+        
+        post_preview.find(id="post-link")['href'] = 'post_' + str(title).strip().replace(" ", "_") + '.html'
+        post_preview.find(id="post-title").string = title
+        post_preview.find(id="post-subtitle").string = sub_title
+        post_preview.find(id="post-metadata").string = f'Publicado por {name} - {date_}'
+        post_preview['id'] = 'post-preview'
         
         

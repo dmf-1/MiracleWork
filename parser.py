@@ -161,15 +161,8 @@ class Parser:
     def duplicate_post(self, title, sub_title, name, date_):
         post_preview = self.soup.find('div', id='post-preview-latest')
         post_preview['id'] = 'post-preview-'+post_preview.find('h2').string.replace(' ', '')
-        print('Sibling')
-        print(post_preview)
-        print('Sibling')
         
-        print('Parent')
         parent_post_preview = post_preview.parent
-        print(parent_post_preview)
-        print('Parent')
-        print('Modified parent')
         new_child_post_preview = self.soup.new_tag('div', id='post-preview-latest')
         
         new_child_post_href = self.soup.new_tag('a', href='post_'+title.replace(' ', '_')+'.html')
@@ -183,9 +176,6 @@ class Parser:
         
         new_child_post_preview.append(new_child_post_href)
         parent_post_preview.insert(0, new_child_post_preview)
-        
-        print(parent_post_preview.prettify())
-        print('Modified')
         
         
         

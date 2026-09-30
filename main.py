@@ -42,6 +42,7 @@ with st.sidebar:
 # Create helper object - check credentials
 helper = Helper()
 helper.load_credentials()
+PUBLISHER_NAME = helper.credentials['name']
 is_pwd_set = helper.is_password_set() # It's declared by user - but describes if git is authenticated
 if not is_pwd_set:
     warning_message = f"""
@@ -125,7 +126,7 @@ def post_page_form():
                 new_post_update_title.load_html()
                 new_post_update_title.edit_page_contents(title, 'h1', 'editable')
                 new_post_update_title.edit_page_contents(sub_title, 'h2', 'editable')
-                new_post_update_title.edit_page_contents(date_, 'small', 'editable')
+                new_post_update_title.edit_page_contents(f'Publicado por {PUBLISHER_NAME} a {date_}', 'small', 'editable')
                 new_post_update_title.update_new_post_banner(banner_path) 
                 new_post_update_title.overwrite_html_file()
                 print('Updated banner and title')
@@ -136,7 +137,7 @@ def post_page_form():
                 index.load_html()
                 # Check if is duplicated or not
                 if not index.check_index(title, sub_title):
-                    index.duplicate_post(title, sub_title, helper.credentials['name'], date_)
+                    index.duplicate_post(title, sub_title, PUBLISHER_NAME, date_)
                     index.overwrite_html_file()
                     print('Updated index to contain new post')
                     st.info('Updated index to contain new post...')

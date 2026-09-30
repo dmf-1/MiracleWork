@@ -126,8 +126,7 @@ def post_page_form():
                 new_post_update_title.edit_page_contents(title, 'h1', 'editable')
                 new_post_update_title.edit_page_contents(sub_title, 'h2', 'editable')
                 new_post_update_title.edit_page_contents(date_, 'small', 'editable')
-                new_post_update_title.update_new_post_banner(banner_path)
-                new_post_update_title.parse_new_html(new_post.soup.prettify()) # I think i can remove this line check later 
+                new_post_update_title.update_new_post_banner(banner_path) 
                 new_post_update_title.overwrite_html_file()
                 print('Updated banner and title')
                 st.info('Updated banner and title...')
@@ -135,12 +134,9 @@ def post_page_form():
                 # Update index information 
                 index = Parser('index.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
                 index.load_html()
-                reference_index = index.soup
-                index.duplicate_post(title, sub_title, helper.credentials['name'], date_)
-                
-                
                 # Check if is duplicated or not
                 if not index.check_index(title, sub_title):
+                    index.duplicate_post(title, sub_title, helper.credentials['name'], date_)
                     index.overwrite_html_file()
                     print('Updated index to contain new post')
                     st.info('Updated index to contain new post...')

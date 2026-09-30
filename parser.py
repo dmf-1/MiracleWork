@@ -159,25 +159,34 @@ class Parser:
 
 
     def duplicate_post(self, title, sub_title, name, date_):
-        post_preview = self.soup.find('div', id='post-preview')
-
-        if post_preview is None:
-            raise ValueError("No div with id 'post-preview' found")
-
-        parent = post_preview.parent
-        index = parent.index(post_preview)
-        duplicate = copy(post_preview)
-
-        # avoid duplicate ids
-        for tag in duplicate.find_all(id=True):
-            del tag['id']
-
-        parent.insert(index + 1, duplicate)
+        post_preview = self.soup.find('div', id='post-preview-latest')
+        post_preview['id'] = 'post-preview-'+post_preview.find('h2').string.replace(' ', '')
+        print('Sibling')
+        print(post_preview)
+        print('Sibling')
         
-        post_preview.find(id="post-link")['href'] = 'post_' + str(title).strip().replace(" ", "_") + '.html'
-        post_preview.find(id="post-title").string = title
-        post_preview.find(id="post-subtitle").string = sub_title
-        post_preview.find(id="post-metadata").string = f'Publicado por {name} - {date_}'
-        post_preview['id'] = 'post-preview'
+        print('Parent')
+        parent_post_preview = post_preview.parent
+        print(parent_post_preview)
+        print('Parent')
+        print('Modified parent')
+        new_child_post_preview = self.soup.new_tag('div', id='post-preview-latest')
+        
+        new_child_post_href = self.soup.new_tag('a', href='post_'+title.replace(' ', '_')+'.html')
+        new_child_post_title = self.soup.new_tag('h2', string=title)
+        new_child_post_subtitle = self.soup.new_tag('h3', string=sub_title)
+        new_child_post_small = self.soup.new_tag('small', class_='post-meta', string=f'Publicado por {name} a {date_}')
+       
+        new_child_post_href.append(new_child_post_title)
+        new_child_post_href.append(new_child_post_subtitle)
+        new_child_post_href.append(new_child_post_small)
+        
+        new_child_post_preview.append(new_child_post_href)
+        parent_post_preview.insert(0, new_child_post_preview)
+        
+        print(parent_post_preview.prettify())
+        print('Modified')
+        
+        
         
         

@@ -14,7 +14,9 @@ date_ = now.strftime("%Y-%m-%d")
 tag_to_label = {
     'h1':'Header',
     'h2':'Sub-header',
-    'span':'Sub-title',
+    'h3':'Sub-header',
+    'span':'Sub-header',
+    'small':'Sub-sub-info',
     'p':'Content',
 }
 
@@ -65,7 +67,8 @@ def generic_form(page):
         editable_fields = parser.find_editable_fields(type='editable')
         if editable_fields:
             for i in editable_fields:
-                i.string = st.text_area(tag_to_label[i.name], value = i.string, placeholder=i.string, height='content')
+                print('Field', i)
+                i.string = st.text_area(tag_to_label[i.name], value = i.string.strip(), placeholder=i.string, height='content')
         save = st.form_submit_button('Save')
         if save: 
             parser.overwrite_html_file()
@@ -150,7 +153,7 @@ def post_page_form():
                 st.error('Please fill all fields to submit')
 
 # Section to edit other page contents
-tab1, tab2, tab3 = st.tabs(["Post", "About me", "Contact"])
+tab1, tab2, tab3, tab4 = st.tabs(["Post", "About me", "Contact", "Home"])
 
 with tab1:
     post_page_form()
@@ -160,5 +163,8 @@ with tab2:
 
 with tab3:
     generic_form('contact')
+
+with tab4:
+    generic_form('index')
 
     

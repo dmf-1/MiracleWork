@@ -166,9 +166,9 @@ class Parser:
         new_child_post_preview = self.soup.new_tag('div', id='post-preview-latest')
         
         new_child_post_href = self.soup.new_tag('a', href='post_'+title.replace(' ', '_')+'.html')
-        new_child_post_title = self.soup.new_tag('h2', string=title)
-        new_child_post_subtitle = self.soup.new_tag('h3', string=sub_title)
-        new_child_post_small = self.soup.new_tag('small', class_='post-meta', string=f'Publicado por {name} a {date_}')
+        new_child_post_title = self.soup.new_tag('h2', type='editable', string=title)
+        new_child_post_subtitle = self.soup.new_tag('h3', type='editable', string=sub_title)
+        new_child_post_small = self.soup.new_tag('small', type='editable', class_='post-meta', string=f'Publicado por {name} a {date_}')
        
         new_child_post_href.append(new_child_post_title)
         new_child_post_href.append(new_child_post_subtitle)

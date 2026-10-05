@@ -44,7 +44,7 @@ class Parser:
         if parse:
             md = MarkdownIt("gfm-like", {"maxNesting": 10})
             content = md.render(content)
-        self.n_soup = bs(content, "html5lib")
+        return bs(content, "html5lib")
 
     def overwrite_html_file(self, new_file=False):
         path = self.path if new_file else self.template
@@ -53,7 +53,7 @@ class Parser:
 
     def append_post_content(self, content):
         """
-        Uses newly parsed html from parse_new_html to convert it to post default structure
+        Appends content to convert it to post default structure
         Identifies base tag in html and appends the content rendered in newly parsed html
         """
         child_tag_name = self.child[0] if self.child else "div"
@@ -78,49 +78,28 @@ class Parser:
                 new_child_tag.append(node)
 
         return new_child_tag
-
-
-    def structure_post_tree(self, new_file=False):
-        """
-        Locates the parent tag in reference HTML (self.soup), replaces its content
-        with the newly parsed child tag, and writes to disk.
-        """
-        if not hasattr(self, "soup"):
-            self.load_html()
-
-        # Locate target parent element using tag name and ID
-        parent_tag_name = self.parent[0] if self.parent else None
-        parent_id = self.parent[1] if len(self.parent) > 1 else None
-
-        if parent_id:
-            parent_node = self.soup.find(parent_tag_name, id=parent_id)
-        else:
-            parent_node = self.soup.find(parent_tag_name)
-
-        if not parent_node:
-            raise ValueError(
-                f"Target parent node ({parent_tag_name}, id={parent_id}) not found in target soup."
-            )
-
-        # Generate new child element tree
-        new_child = self.append_post_content(self.n_soup)
-
-        # Replace existing content inside target parent
-        parent_node.clear()
-        parent_node.append(new_child)
-
-        # Persist updated soup to HTML file
-        self.overwrite_html_file(new_file=new_file)
-        return "Object overwritten successfully"
     
-    def create_new_post(self, post_content):
+    def create_new_post(self, fields):
         """
-        Encapsulates post creation to simplify code
+        Encapsulates post logic 
+        Loads base html 
+        Edits fields based on content
+        Overwrites original HTML with new one
         """
         self.load_html()
-        self.parse_new_html(post_content, True)# True -> we want to parse from MD to HTML 
-        self.structure_post_tree(True) # True -> we want to create a new file
-        return self.path
+        self.edit_page_contents(fields['title'], 'h1', 'editable')
+        self.edit_page_contents(fields['sub_title'], 'h2', 'editable')
+        self.edit_page_contents(f'Publicado por {fields["publisher_name"]} a {fields["date"]}', 'small', 'editable')
+        self.update_new_post_banner(fields['banner_path']) 
+        post_content = self.parse_new_html(fields['post_content'], True)# True -> we want to parse from MD to HTML 
+        prepared_post_content = self.append_post_content(post_content)
+        post_parent = self.soup.find(self.parent[0], id=self.parent[1])
+        if post_parent:
+            post_parent.clear()
+            post_parent.append(prepared_post_content)
+            self.overwrite_html_file(True) # True -> we want to create a new file
+            return 'Posted successfully'
+        return 'Publication failed'
 
     def update_new_post_banner(self, banner_path):
         """
@@ -134,13 +113,17 @@ class Parser:
         To avoid duplicating index entries new index updates need to pass this check
         This is a preliminary measure - better implementation will come
         """
-        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title") if i.text.strip() == title]
-        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle") if i.text.strip()  == sub_title]
-       
-        duplicated_title = len(titles) > 0
-        duplicated_sub_title = len(sub_titles) > 0
+        titles = [i.text.strip() for i in self.soup.find_all('h1', type="editable") if i.text.strip() == title]
+        sub_titles = [i.text.strip() for i in self.soup.find_all('h2', type="editable") if i.text.strip()  == sub_title]
+        h2 = self.soup.find_all('h2')
+        for i in h2:
+            print('TITLE', i.string.strip(), title.strip())
+            if i.string.strip() == title.strip():
+                print('Title found')
+                return False
+        print('Title NOT found')
+        return True
         
-        return duplicated_title and duplicated_sub_title
     
     def find_editable_fields(self, type):
         """
@@ -154,12 +137,14 @@ class Parser:
         Encapsulates page editing code
         """
         post_heading = self.soup.find(tag, type=type)
-        print('Field changed', tag, content)
-        post_heading.string = content
+        if post_heading:
+            post_heading.string = content
 
 
     def duplicate_post(self, title, sub_title, name, date_):
         post_preview = self.soup.find('div', id='post-preview-latest')
+        if post_preview == None:
+            return Exception('Failed to find base div')
         post_preview['id'] = 'post-preview-'+post_preview.find('h2').string.replace(' ', '')
         
         parent_post_preview = post_preview.parent

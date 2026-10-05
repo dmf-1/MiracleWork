@@ -34,30 +34,50 @@ sample = [
     '> And this is how you quote someone!'    
 ]
 
+def settings():
+    st.subheader('Settings')
+    st.divider()
+    st.warning('To update code you must discard all changes')
+    if st.button('Discard changes', type="primary"):
+        sync.git_discard()
+    if st.button('Update streamlit app', type="primary"):
+        sync.git_pull
+
+    st.info('Only to be used if failed to sync')
+    if st.button('Sync new publications', type="primary"):
+        sync.git_add()
+        sync.git_commit()
+        sync.git_push()
+
+
 with st.sidebar:
     st.markdown("### Here's a simple markdown cheat sheet:")
     for s in sample:
         st.text(s)
         st.markdown(s)
         st.divider()
+    sync = Helper()
+    settings()
+        
 
 # Create helper object - check credentials
 helper = Helper()
 helper.load_credentials()
 PUBLISHER_NAME = helper.credentials['name']
 is_pwd_set = helper.is_password_set() # It's declared by user - but describes if git is authenticated
-if not is_pwd_set:
+if not is_pwd_set or not PUBLISHER_NAME:
     warning_message = f"""
-    Attention ⚠️ - streamlit assumes that you do not have git authenticated.\n
+    Attention ⚠️ - You are missing either your GIT token or you publisher name.\n
     This means that you currently can't post.\n
-    If you think this is a mistake (i.e. have recently posted) toggle the authentication button.
+    Confirm that you have your GIT authentication and publisher name set.
     """
     st.warning(warning_message)
+    publisher_name = st.text_input('Name for publications')
     set_pwd = st.button('I confirm that GIT is authenticated in this computer', type='secondary')
-    if set_pwd:
+    if set_pwd and publisher_name:
         helper.toggle_password_set()
+        helper.set_publisher_name(publisher_name)
         st.rerun()
-
 
 def generic_form(page):
     st.subheader(f'Edit "{page}" content')
@@ -67,7 +87,6 @@ def generic_form(page):
         editable_fields = parser.find_editable_fields(type='editable')
         if editable_fields:
             for i in editable_fields:
-                print('Field', i)
                 i.string = st.text_area(tag_to_label[i.name], value = i.string.strip(), placeholder=i.string, height='content')
         save = st.form_submit_button('Save')
         if save: 
@@ -85,70 +104,68 @@ def post_page_form():
         )
         
         #Publication title
-        title = st.text_input("Publication title (will appear on links and page name)")
+        title = st.text_input("Publication title (will appear on links and page name)").strip()
         
         #Publication sub_title
-        sub_title = st.text_input("Subtitle")
+        sub_title = st.text_input("Subtitle").strip()
 
         # Define paragraph inputs
-        post_content = st.text_area("Your next story here....", height=300)
+        post_content = st.text_area("Your next story here....", height=300).strip()
+        
+        # Upload button
+        # Calls method that tracks number of instances externally - might need an object for that - and iteratively adds image and text box.
+        # Don't care for text box id, just append content to an array that will combine everything into a single markdown block.
 
         # Every form must have a submit button.
         submitted = st.form_submit_button("Submit")
         
         if submitted:
-            fields = [
-                banner,
-                title,
-                sub_title,
-                post_content
-            ]
-            complete = len([i for i in fields if i]) == len(fields) # Checks if all fields were submitted
+            fields = {
+               'banner_path'    : banner,
+               'title'          : title,
+               'sub_title'      : sub_title,
+               'post_content'   : post_content,
+               'publisher_name' : PUBLISHER_NAME,
+               'date'           : date_   
+            }
+            
+            complete = len([v for k, v in fields.items() if v]) == len(fields) # Checks if all fields were submitted
             
             if complete:
                 try:
-                        # Create a unique filename based on the original name 
+                    # Create a unique filename based on the original name 
                     file_extension = os.path.splitext(banner.name)[1]
                     file_name      = Path(os.path.splitext(banner.name)[0]).name                                                                                                                                                                  
-                    banner_path = os.path.join(BANNER_DIRECTORY, f"{file_name}{file_extension}") 
+                    fields['banner_path'] = os.path.join(BANNER_DIRECTORY, f"{file_name}{file_extension}") 
                     file_bytes = banner.read()
                     # Write the bytes to the specified local path                                                                                                                                                                            
-                    with open(banner_path, "wb") as of:                                                                                                                                                                                         
+                    with open(fields['banner_path'], "wb") as of:                                                                                                                                                                                         
                         of.write(file_bytes) 
                 except Exception as e:                                                                                                                                                                                                       
                     st.error(f"An error occurred while saving the file: {e}")  
 
-                print('Received post')
                 # Replace publication information  
                 new_post = Parser('post.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
-                new_post_path = new_post.create_new_post(post_content)
-                print('Created new post')
-                st.info('Created new post ...')
-                # Update banner, title, subtitle, and date on post
-                new_post_update_title = Parser(new_post.path, title, ['div', 'parent-post-preview'], ['div', 'child'])
-                new_post_update_title.load_html()
-                new_post_update_title.edit_page_contents(title, 'h1', 'editable')
-                new_post_update_title.edit_page_contents(sub_title, 'h2', 'editable')
-                new_post_update_title.edit_page_contents(f'Publicado por {PUBLISHER_NAME} a {date_}', 'small', 'editable')
-                new_post_update_title.update_new_post_banner(banner_path) 
-                new_post_update_title.overwrite_html_file()
-                print('Updated banner and title')
-                st.info('Updated banner and title...')
+                post_message = new_post.create_new_post(fields)
+                st.info(f'{post_message}')
                 
                 # Update index information 
                 index = Parser('index.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
                 index.load_html()
                 # Check if is duplicated or not
-                if not index.check_index(title, sub_title):
+                if index.check_index(title, sub_title):
                     index.duplicate_post(title, sub_title, PUBLISHER_NAME, date_)
                     index.overwrite_html_file()
-                    print('Updated index to contain new post')
-                    st.info('Updated index to contain new post...')
+                    st.info('Updated home page to contain new post...')
                 else:
                     st.info('Home page not updated as it was a duplicated / edit post')
 
                 # Replace index
-                st.info(f"✅ Story submitted successully")
+                st.info(f"Story saved successfully")
+                sync.git_add()
+                sync.git_commit()
+                sync.git_push()
+                st.info(f"✅ Site updated successfully")
             else:
                 st.error('Please fill all fields to submit')
 

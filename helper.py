@@ -16,7 +16,7 @@ class Helper:
             with open(self.fname, 'r') as of:
                 self.credentials = json.load(of)
         else:
-            self.credentials = {"name": "", "username": "JDO", "is_password_set": False}
+            self.credentials = {"name": "", "username": "", "is_password_set": False}
             with open(Path(self.path,self.fname), 'w') as of:
                 json.dump(self.credentials, of)
     

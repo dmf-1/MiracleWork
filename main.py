@@ -11,54 +11,7 @@ BANNER_DIRECTORY = "img"
 now = datetime.now()
 date_ = now.strftime("%Y-%m-%d")
 
-tag_to_label = {
-    'h1':'Header',
-    'h2':'Sub-header',
-    'h3':'Sub-header',
-    'span':'Sub-header',
-    'small':'Sub-sub-info',
-    'p':'Content',
-}
-
-
 st.title("Silver-potato")
-
-sample = [
-    '# This is how you create a header',
-    '## Here is a subheader',
-    '''* These are 
-    * Bullet points''',
-    '~This is how you strike a sentence~',
-    '_This is how you set text in italic_',
-    '*This is how you bold*',
-    '> And this is how you quote someone!'    
-]
-
-def settings():
-    st.subheader('Settings')
-    st.divider()
-    st.warning('To update code you must discard all changes')
-    if st.button('Discard changes', type="primary"):
-        sync.git_discard()
-    if st.button('Update streamlit app', type="primary"):
-        sync.git_pull
-
-    st.info('Only to be used if failed to sync')
-    if st.button('Sync new publications', type="primary"):
-        sync.git_add()
-        sync.git_commit()
-        sync.git_push()
-
-
-with st.sidebar:
-    st.markdown("### Here's a simple markdown cheat sheet:")
-    for s in sample:
-        st.text(s)
-        st.markdown(s)
-        st.divider()
-    sync = Helper()
-    settings()
-        
 
 # Create helper object - check credentials
 helper = Helper()
@@ -78,6 +31,94 @@ if not is_pwd_set or not PUBLISHER_NAME:
         helper.toggle_password_set()
         helper.set_publisher_name(publisher_name)
         st.rerun()
+
+tag_to_label = {
+    'h1':'Header',
+    'h2':'Sub-header',
+    'h3':'Sub-header',
+    'span':'Sub-header',
+    'small':'Sub-sub-info',
+    'p':'Content',
+}
+
+
+
+sample = [
+    '# This is how you create a header',
+    '## Here is a subheader',
+    '''* These are 
+    * Bullet points''',
+    '~This is how you strike a sentence~',
+    '_This is how you set text in italic_',
+    '*This is how you bold*',
+    '> And this is how you quote someone!'    
+]
+
+def settings():
+    if st.button('Clear changes', type='primary'):
+        helper.git_discard()
+        st.rerun()
+
+    elif st.button('Update code'):
+        helper.git_pull
+        st.rerun()
+    
+    elif st.button('Force upload'):
+        helper.git_add()
+        helper.git_commit()
+        helper.git_push()
+        st.rerun()
+    
+    elif st.button('Change user name'):
+        helper.load_credentials()
+        helper.toggle_password_set()
+        st.rerun()
+ 
+
+
+def image_uploader():
+    st.info('Add images and it converts them to markdown path')
+    images = st.file_uploader('Upload publication images', type=["jpg", "png"], accept_multiple_files = True)
+    if images:
+        for i in images:
+            save_image(i)
+            st.text(f'![publication_image](img/{i.name})')
+
+    st.text('Copy the links above in the sections in which you wish to add an image')
+
+
+def save_image(image):
+    try:
+        # Create a unique filename based on the original name 
+        file_extension = os.path.splitext(image.name)[1]
+        file_name      = Path(os.path.splitext(image.name)[0]).name
+        image_path     = os.path.join(BANNER_DIRECTORY, f"{file_name}{file_extension}") 
+        file_bytes     = image.read()
+        # Write the bytes to the specified local path                                                                                                                                                                            
+        with open(image_path, "wb") as of:                                                                                                                                                                                         
+            of.write(file_bytes) 
+        return image_path
+
+    except Exception as e:                                                                                                                                                                                                       
+        st.error(f"An error occurred while saving the file: {e}")  
+
+
+
+with st.sidebar:
+    tab1, tab2, tab3 = st.tabs(['Settings', 'Image uploader', 'Markdown Cheat sheet'])
+    with tab1:
+        settings()
+    with tab2:
+        image_uploader()
+    with tab3:
+        st.markdown("## Here's a simple markdown cheat sheet:")
+        st.space()
+        for s in sample:
+            st.text(s)
+            st.markdown(s)
+            st.divider()
+        
+        
 
 def generic_form(page):
     st.subheader(f'Edit "{page}" content')
@@ -100,7 +141,7 @@ def post_page_form():
     with st.form("post_page_form"):
         # Publication header
         banner = st.file_uploader(
-            "Upload banner image", type=["jpg", "png"]
+            "Upload banner image", type=["jpg", "png"], accept_multiple_files = False
         )
         
         #Publication title
@@ -132,17 +173,7 @@ def post_page_form():
             complete = len([v for k, v in fields.items() if v]) == len(fields) # Checks if all fields were submitted
             
             if complete:
-                try:
-                    # Create a unique filename based on the original name 
-                    file_extension = os.path.splitext(banner.name)[1]
-                    file_name      = Path(os.path.splitext(banner.name)[0]).name                                                                                                                                                                  
-                    fields['banner_path'] = os.path.join(BANNER_DIRECTORY, f"{file_name}{file_extension}") 
-                    file_bytes = banner.read()
-                    # Write the bytes to the specified local path                                                                                                                                                                            
-                    with open(fields['banner_path'], "wb") as of:                                                                                                                                                                                         
-                        of.write(file_bytes) 
-                except Exception as e:                                                                                                                                                                                                       
-                    st.error(f"An error occurred while saving the file: {e}")  
+                fields['banner_path'] = save_image(banner) 
 
                 # Replace publication information  
                 new_post = Parser('post.html', title, ['div', 'parent-post-preview'], ['div', 'child'])
@@ -162,9 +193,9 @@ def post_page_form():
 
                 # Replace index
                 st.info(f"Story saved successfully")
-                sync.git_add()
-                sync.git_commit()
-                sync.git_push()
+                helper.git_add()
+                helper.git_commit()
+                helper.git_push()
                 st.info(f"✅ Site updated successfully")
             else:
                 st.error('Please fill all fields to submit')

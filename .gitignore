@@ -1,1 +1,12 @@
-.tasks.md
+task.md
+.venv/
+css/
+fonts/
+Images/
+img/
+js/
+less/
+mail/
+.python-version
+uv.lock
+__pycache__/

@@ -2,10 +2,7 @@ import pathlib
 import re
 from bs4 import BeautifulSoup as bs
 from markdown_it import MarkdownIt
-import os
-
-def commit():
-    os.system('~/update_git.sh')
+from copy import copy
 
 PATH = pathlib.Path(__file__).parent.resolve()
 class Parser:
@@ -20,7 +17,10 @@ class Parser:
         fname = str(title).strip().replace(" ", "_")
         self.path = pathlib.Path(dst_dir / f"post_{fname}.html")
 
-    def load_original(self):
+    def load_html(self):
+        """
+        Loads an html file into object
+        """
         with open(self.template, "r", encoding="utf-8") as op:
             html = op.read()
         self.soup = bs(html, "html5lib")
@@ -36,20 +36,26 @@ class Parser:
                 img_n += 1
         return content
 
-    def make_new_soup(self, content, parse=False):
+    def parse_new_html(self, content, parse=False):
+        """
+        Receives new content (html / markdown) an parses into html 
+        """
+    
         if parse:
             md = MarkdownIt("gfm-like", {"maxNesting": 10})
-            content = self.convert_images(content)
             content = md.render(content)
-        self.n_soup = bs(content, "html5lib")
+        return bs(content, "html5lib")
 
     def overwrite_html_file(self, new_file=False):
         path = self.path if new_file else self.template
         with open(path, "w", encoding="utf-8") as ov:
             ov.write(self.soup.prettify())
 
-    def create_new_child(self):
-        """Wraps parsed body nodes from self.n_soup into a new element defined by self.child."""
+    def append_post_content(self, content):
+        """
+        Appends content to convert it to post default structure
+        Identifies base tag in html and appends the content rendered in newly parsed html
+        """
         child_tag_name = self.child[0] if self.child else "div"
         child_id = (
             self.child[1]
@@ -65,73 +71,40 @@ class Parser:
         )
 
         # Extract parsed body contents from converted Markdown HTML
-        parsed_body = self.n_soup.find("body")
+        parsed_body = content.find("body")
         if parsed_body:
             # Transfer top-level elements into the new child tag
             for node in list(parsed_body.children):
                 new_child_tag.append(node)
 
         return new_child_tag
-
-    def make_family(self, new_file=False):
-        """Locates the parent tag in reference HTML (self.soup), replaces its content
-
-        with the newly parsed child tag, and writes to disk.
-        """
-        if not hasattr(self, "soup"):
-            self.load_original()
-
-        # Locate target parent element using tag name and ID
-        parent_tag_name = self.parent[0] if self.parent else None
-        parent_id = self.parent[1] if len(self.parent) > 1 else None
-
-        if parent_id:
-            parent_node = self.soup.find(parent_tag_name, id=parent_id)
-        else:
-            parent_node = self.soup.find(parent_tag_name)
-
-        if not parent_node:
-            raise ValueError(
-                f"Target parent node ({parent_tag_name}, id={parent_id}) not found in target soup."
-            )
-
-        # Generate new child element tree
-        new_child = self.create_new_child()
-
-        # Replace existing content inside target parent
-        parent_node.clear()
-        parent_node.append(new_child)
-
-        # Persist updated soup to HTML file
-        self.overwrite_html_file(new_file=new_file)
-        return "Object overwritten successfully"
     
-    def create_new_post(self, post_content):
+    def create_new_post(self, fields):
         """
-        Encapsulates post creation to simplify code
-            """
-        self.load_original()
-        self.make_new_soup(post_content, True)# True -> we want to parse from MD to HTML 
-        self.make_family(True) # True -> we want to create a new file
-        return self.path
+        Encapsulates post logic 
+        Loads base html 
+        Edits fields based on content
+        Overwrites original HTML with new one
+        """
+        self.load_html()
+        self.edit_page_contents(fields['title'], 'h1', 'editable')
+        self.edit_page_contents(fields['sub_title'], 'h2', 'editable')
+        self.edit_page_contents(f'Publicado por {fields["publisher_name"]} a {fields["date"]}', 'small', 'editable')
+        self.update_new_post_banner(fields['banner_path']) 
+        post_content = self.parse_new_html(fields['post_content'], True)# True -> we want to parse from MD to HTML 
+        prepared_post_content = self.append_post_content(post_content)
+        post_parent = self.soup.find(self.parent[0], id=self.parent[1])
+        if post_parent:
+            post_parent.clear()
+            post_parent.append(prepared_post_content)
+            self.overwrite_html_file(True) # True -> we want to create a new file
+            return 'Posted successfully'
+        return 'Publication failed'
 
-    def update_new_post_contents(self, banner_path, title, sub_title, date_):
-        # Fields that are updated with each new post
-        fields_to_change = {
-            'h1':['h1', title],
-            'h2':['subheading', sub_title],
-            'small':['meta', date_]
-        }
-        # Load new post reference html
-        self.load_original()
-
-        # Iteratively update fields
-        for k, v in fields_to_change.items():
-            post_heading = self.soup.find(k, class_=v[0])
-            print('V1: ', v[0], v[1])
-            post_heading.string = v[1]
-        
-        # Update background banner
+    def update_new_post_banner(self, banner_path):
+        """
+            Updates banner on header in page
+        """
         background_image = self.soup.find('header', class_='intro-header')
         background_image['style'] = f"background-image: url('{banner_path}')"
         
@@ -140,15 +113,55 @@ class Parser:
         To avoid duplicating index entries new index updates need to pass this check
         This is a preliminary measure - better implementation will come
         """
-        titles = [i.text.strip() for i in self.soup.find_all('h2', id="post-title") if i.text.strip == title]
-        sub_titles = [i.text.strip() for i in self.soup.find_all('h3', id="post-subtitle") if i.text.strip == sub_title]
-       
-        duplicated_title = len(titles) > 0
-        duplicated_sub_title = len(sub_titles) > 0
-
-        print('Title ', duplicated_title)
-        print('Sub title ', duplicated_sub_title)
+        titles = [i.text.strip() for i in self.soup.find_all('h1', type="editable") if i.text.strip() == title]
+        sub_titles = [i.text.strip() for i in self.soup.find_all('h2', type="editable") if i.text.strip()  == sub_title]
+        h2 = self.soup.find_all('h2')
+        for i in h2:
+            print('TITLE', i.string.strip(), title.strip())
+            if i.string.strip() == title.strip():
+                print('Title found')
+                return False
+        print('Title NOT found')
+        return True
         
-        return duplicated_title and duplicated_sub_title
+    
+    def find_editable_fields(self, type):
+        """
+        Identify editable fields in "editable" pages - include About me, Contact
+        """
+        post_heading = self.soup.find_all(type=type)
+        return post_heading
+        
+    def edit_page_contents(self, content, tag, type):
+        """
+        Encapsulates page editing code
+        """
+        post_heading = self.soup.find(tag, type=type)
+        if post_heading:
+            post_heading.string = content
+
+
+    def duplicate_post(self, title, sub_title, name, date_):
+        post_preview = self.soup.find('div', id='post-preview-latest')
+        if post_preview == None:
+            return Exception('Failed to find base div')
+        post_preview['id'] = 'post-preview-'+post_preview.find('h2').string.replace(' ', '')
+        
+        parent_post_preview = post_preview.parent
+        new_child_post_preview = self.soup.new_tag('div', id='post-preview-latest')
+        
+        new_child_post_href = self.soup.new_tag('a', href='post_'+title.replace(' ', '_')+'.html')
+        new_child_post_title = self.soup.new_tag('h2', type='editable', string=title)
+        new_child_post_subtitle = self.soup.new_tag('h3', type='editable', string=sub_title)
+        new_child_post_small = self.soup.new_tag('small', type='editable', class_='post-meta', string=f'Publicado por {name} a {date_}')
+       
+        new_child_post_href.append(new_child_post_title)
+        new_child_post_href.append(new_child_post_subtitle)
+        new_child_post_href.append(new_child_post_small)
+        
+        new_child_post_preview.append(new_child_post_href)
+        parent_post_preview.insert(0, new_child_post_preview)
+        
+        
         
         

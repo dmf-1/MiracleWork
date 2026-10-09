@@ -38,6 +38,7 @@ class Helper:
         return result.stdout
     
     def git_pull(self):
+        result = subprocess.run(["git", "reset", "--soft", "HEAD~1"], cwd=self.path, capture_output=True, text=True)
         result = subprocess.run(["git", "pull"], cwd=self.path, capture_output=True, text=True)
         return result.stdout
     

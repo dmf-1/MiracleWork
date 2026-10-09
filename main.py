@@ -55,11 +55,7 @@ sample = [
 ]
 
 def settings():
-    if st.button('Clear changes', type='primary'):
-        helper.git_discard()
-        st.rerun()
-    
-    elif st.button('Force upload'):
+    if st.button('Upload'):
         helper.git_add()
         helper.git_commit()
         helper.git_push()

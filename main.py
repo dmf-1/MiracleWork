@@ -58,10 +58,6 @@ def settings():
     if st.button('Clear changes', type='primary'):
         helper.git_discard()
         st.rerun()
-
-    elif st.button('Update code'):
-        helper.git_pull
-        st.rerun()
     
     elif st.button('Force upload'):
         helper.git_add()

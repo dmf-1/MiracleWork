@@ -97,6 +97,7 @@ def save_image(image):
         # Write the bytes to the specified local path                                                                                                                                                                            
         with open(image_path, "wb") as of:                                                                                                                                                                                         
             of.write(file_bytes) 
+        st.info( file_name, image_path)
         return image_path
 
     except Exception as e:                                                                                                                                                                                                       

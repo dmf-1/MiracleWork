@@ -36,4 +36,12 @@ uv run streamlit run main.py
 <img width="1289" height="862" alt="image" src="https://github.com/user-attachments/assets/987bc77b-9437-4f21-a4d0-20bb8e467175" />
 
 
+Welcome, 
 
+This is a place where I dump my ideas, thoughts and projects. 
+
+A place for you to 'zoom back' from day-to-day weight, and take your time to smell the flowers. 
+
+Here the theme is *culture appreciation*. 
+
+If you wish to contact me: https://dmf-1.github.io/MiracleWork/contact.html

@@ -4,7 +4,8 @@ from helper import Helper
 import os       
 from pathlib import Path
 from bs4 import NavigableString      
-from datetime import datetime                                                                                                                                                                                        
+from datetime import datetime  
+import random                                                                                                                                                                                      
                                                                                                                                                                     
 SAVE_DIRECTORY = "Images"
 BANNER_DIRECTORY = "img"
@@ -61,10 +62,21 @@ def settings():
         helper.git_push()
         st.rerun()
     
+    elif st.button('Clear'):
+        helper.git_discard()
+        st.rerun()
+    
     elif st.button('Change user name'):
         helper.load_credentials()
         helper.toggle_password_set()
         st.rerun()
+    st.divider()
+    results = helper.git_status().split("\n")[:-1]
+    st.text(f"Modified files - not uploaded:")
+    for r in results:
+        st.markdown(f"* {r}")
+    
+    
  
 
 
@@ -118,11 +130,16 @@ def generic_form(page):
         parser = Parser(f'{page}.html', 'Title')
         parser.load_html()
         editable_fields = parser.find_editable_fields(type='editable')
+        n = 0
         if editable_fields:
             for i in editable_fields:
-                i.string = st.text_area(tag_to_label[i.name], value = i.string.strip(), placeholder=i.string, height='content')
+                if i.string:
+                    i.string = st.text_area(tag_to_label[i.name], value = i.string.strip(), key=f"id_{page}_{n}", placeholder=i.string, height='content')
+                else:
+                    i['style'] = "visibility:hidden" if st.checkbox('Hide divider', key=f"id_{page}_checkbox_{n}") else ""
+                n += 1
         save = st.form_submit_button('Save')
-        if save: 
+        if save:
             parser.overwrite_html_file()
             st.rerun()
 
@@ -178,16 +195,16 @@ def post_page_form():
                 # Check if is duplicated or not
                 if index.check_index(title, sub_title):
                     index.duplicate_post(title, sub_title, PUBLISHER_NAME, date_)
-                    index.overwrite_html_file()
                     st.info('Updated home page to contain new post...')
                 else:
                     st.info('Home page not updated as it was a duplicated / edit post')
+                index.overwrite_html_file()
 
                 # Replace index
                 st.info(f"Story saved successfully")
-                helper.git_add()
-                helper.git_commit()
-                helper.git_push()
+                #helper.git_add()
+                #helper.git_commit()
+                #helper.git_push()
                 st.info(f"✅ Site updated successfully")
             else:
                 st.error('Please fill all fields to submit')

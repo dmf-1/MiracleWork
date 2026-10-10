@@ -33,7 +33,13 @@ class Helper:
         with open(self.fname, 'w') as op:
             json.dump(self.credentials, op)
     
+    def git_status(self):
+        result = subprocess.run(["git", "status", "-s"], cwd=self.path, capture_output=True, text=True)
+        return result.stdout
+
     def git_discard(self):
+        result = subprocess.run(["git", "restore", "--staged", "."], cwd=self.path, capture_output=True, text=True)
+        result = subprocess.run(["git", "clean", "-f", "."], cwd=self.path, capture_output=True, text=True)
         result = subprocess.run(["git", "restore", "."], cwd=self.path, capture_output=True, text=True)
         return result.stdout
     

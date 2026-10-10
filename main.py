@@ -35,10 +35,12 @@ if not is_pwd_set or not PUBLISHER_NAME:
 
 tag_to_label = {
     'h1':'Header',
-    'h2':'Sub-header',
-    'h3':'Sub-header',
-    'span':'Sub-header',
-    'small':'Sub-sub-info',
+    'h2':'Sub-header 2',
+    'h3':'Sub-header 3',
+    'h4':'Sub-header 4',
+    'h5':'Sub-header 5',
+    'span':'Sub-header <span>',
+    'small':'Sub-sub-info <small>',
     'p':'Content',
 }
 

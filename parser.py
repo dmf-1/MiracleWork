@@ -113,8 +113,6 @@ class Parser:
         To avoid duplicating index entries new index updates need to pass this check
         This is a preliminary measure - better implementation will come
         """
-        titles = [i.text.strip() for i in self.soup.find_all('h1', type="editable") if i.text.strip() == title]
-        sub_titles = [i.text.strip() for i in self.soup.find_all('h2', type="editable") if i.text.strip()  == sub_title]
         h2 = self.soup.find_all('h2')
         for i in h2:
             print('TITLE', i.string.strip(), title.strip())
@@ -154,6 +152,7 @@ class Parser:
         new_child_post_title = self.soup.new_tag('h2', type='editable', string=title)
         new_child_post_subtitle = self.soup.new_tag('h3', type='editable', string=sub_title)
         new_child_post_small = self.soup.new_tag('small', type='editable', class_='post-meta', string=f'Publicado por {name} a {date_}')
+        new_child_post_small = self.soup.new_tag('hr', type='editable')
        
         new_child_post_href.append(new_child_post_title)
         new_child_post_href.append(new_child_post_subtitle)

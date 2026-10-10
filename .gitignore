@@ -2,7 +2,7 @@ task.md
 .venv/
 css/
 fonts/
-Images/
+__pycache__/*
 js/
 less/
 mail/

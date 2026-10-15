@@ -1,9 +1,19 @@
 import subprocess
 import os
 import json
-from pathlib import Path
+import re
+from pathlib import Path, PurePosixPath
 
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+
+# Characters invalid in Windows file names (<>:"/\|?*), control characters,
+# and characters that break the generated links / CSS url() (#, %, ').
+INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*#%\'\x00-\x1f]')
+WINDOWS_RESERVED_NAMES = {
+    'CON', 'PRN', 'AUX', 'NUL',
+    *(f'COM{i}' for i in range(1, 10)),
+    *(f'LPT{i}' for i in range(1, 10)),
+}
 
 class Helper:     
     def __init__(self, fname = '.credentials.json', path = SCRIPT_PATH):
@@ -11,6 +21,29 @@ class Helper:
         self.path = path
         pass
     
+    @staticmethod
+    def sanitize_filename(name, default='untitled'):
+        """
+        Converts user input into a name that is safe to use as a file name on
+        Windows, Linux and macOS, and inside the generated html links.
+        Spaces are replaced by underscores.
+        """
+        fname = re.sub(r'\s+', ' ', str(name))
+        fname = INVALID_FILENAME_CHARS.sub('', fname)
+        # Windows does not allow trailing dots or spaces
+        fname = fname.strip().rstrip('. ').replace(' ', '_')
+        if fname.split('.')[0].upper() in WINDOWS_RESERVED_NAMES:
+            fname = f'_{fname}'
+        return fname or default
+
+    @staticmethod
+    def web_path(*parts):
+        """
+        Joins path parts using forward slashes, as expected by html / css,
+        regardless of the operating system.
+        """
+        return PurePosixPath(*parts).as_posix()
+
     def load_credentials(self):
         if os.path.exists(self.fname):
             with open(self.fname, 'r') as of:

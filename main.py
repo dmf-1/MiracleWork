@@ -77,9 +77,6 @@ def settings():
     st.text(f"Modified files - not uploaded:")
     for r in results:
         st.markdown(f"* {r}")
-    
-    
- 
 
 
 def image_uploader():
@@ -87,29 +84,30 @@ def image_uploader():
     images = st.file_uploader('Upload publication images', type=["jpg", "png"], accept_multiple_files = True)
     if images:
         for i in images:
-            save_image(i)
-            st.text(f'![publication_image](img/{i.name})')
+            image_path = save_image(i)
+            if image_path:
+                st.text(f'![publication_image]({image_path})')
     st.text('Copy the links above in the sections in which you wish to add an image')
-    
-    if st.button('Upload images', key='images_button_upload', type='primary'):
-        helper.git_add()
-        helper.git_commit()
-        helper.git_push()
-        st.rerun()
+    if st.button('Upload images', type='primary'):
+            helper.git_add()
+            helper.git_commit()
+            helper.git_push()
+            st.rerun()
 
 
 
 def save_image(image):
     try:
         # Create a unique filename based on the original name 
-        file_extension = os.path.splitext(image.name)[1]
-        file_name      = Path(os.path.splitext(image.name)[0]).name
-        image_path     = os.path.join(BANNER_DIRECTORY, f"{file_name}{file_extension}") 
+        stem, file_extension = os.path.splitext(Path(image.name).name)
+        file_name      = f"{Helper.sanitize_filename(stem)}{Helper.sanitize_filename(file_extension, '')}"
+        image_path     = Path(helper.path, BANNER_DIRECTORY, file_name)
         file_bytes     = image.read()
-        # Write the bytes to the specified local path                                                                                                                                                                            
-        with open(image_path, "wb") as of:                                                                                                                                                                                         
+        # Write the bytes to the specified local path
+        with open(image_path, "wb") as of:
             of.write(file_bytes)
-        return image_path
+        # Return a web path (forward slashes) - os.path.join would produce img\file.jpg on windows
+        return Helper.web_path(BANNER_DIRECTORY, file_name)
 
     except Exception as e:                                                                                                                                                                                                       
         st.error(f"An error occurred while saving the file: {e}")  
@@ -231,5 +229,3 @@ with tab3:
 
 with tab4:
     generic_form('index')
-
-    

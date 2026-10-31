@@ -45,8 +45,8 @@ class Helper:
         return PurePosixPath(*parts).as_posix()
 
     def load_credentials(self):
-        if os.path.exists(self.fname):
-            with open(self.fname, 'r') as of:
+        if os.path.exists(Path(self.path,self.fname)):
+            with open(Path(self.path,self.fname), 'r') as of:
                 self.credentials = json.load(of)
         else:
             self.credentials = {"name": "", "username": "", "is_password_set": False}
@@ -63,7 +63,7 @@ class Helper:
     
     def toggle_password_set(self):
         self.credentials["is_password_set"] = not self.credentials["is_password_set"] == True
-        with open(self.fname, 'w') as op:
+        with open(Path(self.path,self.fname), 'w') as op:
             json.dump(self.credentials, op)
     
     def git_status(self):
